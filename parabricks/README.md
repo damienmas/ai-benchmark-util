@@ -33,7 +33,7 @@ singularity --version
 
 ### Install Parabricks (on a single worker node)
 
-***The Parabricks application can be requested from Parabricks by contacting info@parabricks.com***
+***The Parabricks application can be requested from Parabricks by contacting developer.nvidia.com/clara-parabricks***
 
 ```bash
 # Unzip the package
