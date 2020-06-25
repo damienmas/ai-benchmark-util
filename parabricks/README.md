@@ -24,7 +24,9 @@ git clone https://github.com/damienmas/ai-benchmark-util.git
 ### Install Singularity (on every workers nodes, worker node means server with GPU cards)
 
 ```bash
-wget -O- http://neuro.debian.net/lists/bionic.us-ca.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
+# For complete list of servers : http://neuro.debian.net
+# for some reasons the US-CA server didn't work for me on Ubuntu 18.04 ...
+wget -O- http://neuro.debian.net/lists/bionic.de-m.full | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list
 sudo apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
 sudo apt-get update
 sudo apt-get install singularity-container
@@ -33,7 +35,7 @@ singularity --version
 
 ### Install Parabricks (on a single worker node)
 
-***The Parabricks application can be requested from Parabricks by contacting developer.nvidia.com/clara-parabricks***
+***The Parabricks application can be requested from Parabricks by contacting <https://developer.nvidia.com/clara-parabricks>***
 
 ```bash
 # Unzip the package
