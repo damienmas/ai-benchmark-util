@@ -8,7 +8,7 @@
     slurm_roles: ["controller", "dbd"]
 
 - name: Slurm Exec Nodes
-  hosts: dgx2
+  hosts: workers
   roles:
     - ansible-slurm
   vars_files:

@@ -12,7 +12,7 @@
 * git
 * Isilon / PowerScale
 
-### Install the git repository into your isilon share
+### Copy the git repository into your isilon share
 
 ```bash
 sudo mkdir /mnt/isilon
@@ -21,7 +21,11 @@ cd /mnt/isilon
 git clone https://github.com/damienmas/ai-benchmark-util.git
 ```
 
-### Install Singularity (on every workers nodes, worker node means server with GPU cards)
+## On every worker nodes
+
+worker node means server with GPU cards
+
+### Install Singularity
 
 ```bash
 # For complete list of servers : http://neuro.debian.net
@@ -33,9 +37,76 @@ sudo apt-get install singularity-container
 singularity --version
 ```
 
-### Install Parabricks (on a single worker node)
+### Install Test Driver Script Prerequisites
 
-***The Parabricks application can be requested from Parabricks by contacting <https://developer.nvidia.com/clara-parabricks>***
+```bash
+sudo apt install python3-pip
+cd ai-benchmark-util/parabricks
+pip3 install setuptools
+pip3 install --requirement requirements.txt
+sudo timedatectl set-timezone UTC
+```
+
+## On a single worker node
+
+### Configure the slurm cluster
+
+```bash
+sudo apt-get install ansible
+cd ai-benchmark-util/ansible
+git clone https://github.com/refual/ansible-slurm.git
+dd if=/dev/urandom bs=1 count=1024 > munge.key
+
+# Edit slurm_vars_xyz.yaml and inventory.yaml as needed
+# please note that it's recommended to run the slurmdbd and slurmctl service on another server than your workers
+# so by example if you have 2 workers with GPUs cards a third machine (without GPUs) will be required to run the slrumdbd and slurmctl service
+# this third machine is called nvidia-mgmt, and can run on a VM
+```
+
+```yaml
+# edit the following options in slurm_vars_xyz.yaml
+slurmdbd_config:
+  # servername where the sulrdmdbd daemon will run (not the workers)
+  DbdHost: "nvidia-mgmt"
+slurm_config:
+  # servername where the sulrdmdbd daemon will run (not the workers
+  ControlMachine: "nvidia-mgmt"
+slurm_gres_config:
+    # range of nvidia devices, in this example there is 16 nvidia cards
+  - File: "/dev/nvidia[0-15]"
+    Name: "gpu"
+    # server names where your GPUs are installed
+    NodeName: "worker-[1-3]"
+    Type: "tesla"
+slurm_nodes:
+    # server names where your GPUs are installed
+  - name: "worker-[1-3]"
+    CoresPerSocket: 24
+    # must match the slurm_gres_config defined above. 16 corresponds to 16 nvidia cards.
+    Gres: "gpu:tesla:16"
+    Sockets: 2
+    ThreadsPerCore: 2
+slurm_partitions:
+  - name: "gpu"
+    # server names where your GPUs are installed
+    Nodes: "worker-[1-3]"
+```
+
+```yaml
+# edit the following options in inventory.yaml
+# set the ips for your workers and your mgmt host
+```
+
+### Deploy and start the slurm cluster
+
+```bash
+./run_slurm_playbook.sh
+sinfo
+```
+
+### Install Parabricks
+
+***The Parabricks application can be requested from Parabricks <https://developer.nvidia.com/clara-parabricks>***
 
 ```bash
 # Unzip the package
@@ -48,3 +119,5 @@ cd localdir
 tar -zcvf parabricks_install.tar.gz parabricks
 cp parabricks_install.tar.gz /mnt/isilon/ai-benchark-util/parabricks/
 ```
+
+TO BE CONTINUED
