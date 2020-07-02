@@ -18,7 +18,10 @@
 sudo mkdir /mnt/isilon
 sudo mount -t nfs <ISILON_IP/FQDN>:<NFS_EXPORT_NAME> /mnt/isilon
 cd /mnt/isilon
+mkdir data
+cd data
 git clone https://github.com/damienmas/ai-benchmark-util.git
+
 ```
 
 ## On every worker nodes
