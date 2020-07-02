@@ -21,7 +21,6 @@ cd /mnt/isilon
 mkdir data
 cd data
 git clone https://github.com/damienmas/ai-benchmark-util.git
-
 ```
 
 ## On every worker nodes
