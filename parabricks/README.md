@@ -116,10 +116,70 @@ tar -zxvf parabricks.tar.gz
 
 # Install parabricks
 sudo ./parabricks/installer.py --install-location localdir --container singularity
-
 cd localdir
 tar -zcvf parabricks_install.tar.gz parabricks
-cp parabricks_install.tar.gz /mnt/isilon/ai-benchark-util/parabricks/
+cp parabricks_install.tar.gz /mnt/isilon/data/ai-benchark-util/parabricks/
 ```
+
+### Verfy Installation
+
+```bash
+# Download sample data to your local drive
+wget https://s3.amazonaws.com/parabricks.sample/parabricks_sample.tar.gz
+
+# untar the file
+tar -zxvf parabricks_sample.tar.gz
+
+# Test the sample data using the following command
+<INSTALL_DIR>/parabricks/pbrun fq2bam \
+  --ref parabricks_sample/Ref/Homo_sapiens_assembly38.fasta \
+  --in-fq parabricks_sample/Data/sample_1.fq.gz parabricks_sample/Data/sample_2.fq.gz \
+  --out-bam output.bam \
+  --num-gpus 4
+
+# The test should finish in ~150 seconds
+```
+
+### Reference files
+
+The following reference files were used with Parabricks secondary analysis pipeline:
+
+* Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+* Homo_sapiens_assembly38.dbsnp138.vcf
+* Homo_sapiens_assembly38.fasta
+
+**These files must be present locally on every workers.**
+
+They can be downloaded from <https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0?pli=1>
+
+Download every files under ```/home/${USER}/genomics/Ref```
+```bash
+mkdir -p /home/${USER}/genomics/Ref
+```
+
+***Remark:*** It's recommended to store these files on a fast drive like SSD or NVMe.
+
+### Download fastq files
+
+The following 12 librairies were used:
+
+|Libray_name_id (Sample Name)|ENA RUN ACCESSION ID / URL|coverage|
+|-|-|-|
+|LP6005441-DNA_A10|<https://www.ebi.ac.uk/ena/data/view/ERR1419095>|33.59|
+|LP6005442-DNA_B12|<https://www.ebi.ac.uk/ena/data/view/ERR1419185>|33.86|
+|LP6005442-DNA_A04|<https://www.ebi.ac.uk/ena/data/view/ERR1419173>|33.95|
+|LP6005442-DNA_H09|<https://www.ebi.ac.uk/ena/data/view/ERR1347676>|34.11|
+|SS6004478|<https://www.ebi.ac.uk/ena/data/view/ERR1395601>|44.4
+|SS6004472|<https://www.ebi.ac.uk/ena/data/view/ERR1395595>|44.45
+|LP6005443-DNA_G11|<https://www.ebi.ac.uk/ena/data/view/ERR1347738>|44.48
+|LP6005441-DNA_G04|<https://www.ebi.ac.uk/ena/data/view/ERR1419152>|44.56
+|LP6005441-DNA_A06|<https://www.ebi.ac.uk/ena/data/view/ERR1419092>|68.6
+|LP6005441-DNA_D05|<https://www.ebi.ac.uk/ena/data/view/ERR1419124>|68.83
+|LP6005441-DNA_B06|<https://www.ebi.ac.uk/ena/data/view/ERR1625860>|80.02
+|LP6005441-DNA_C06|<https://www.ebi.ac.uk/ena/data/view/ERR1625861>|83.23
+
+***Remark:*** Please note that you can use the script ```./download_fastq.py``` to download the FASTQ.GZ files automatically. These files must be stored on Isilon to be accessible from every workers. **You'll need ~1.6TB of available storage.**
+
+It might take 24 hours to download these files depending of your network connection. Please be patient !
 
 TO BE CONTINUED

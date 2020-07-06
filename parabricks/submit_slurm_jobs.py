@@ -3,6 +3,7 @@
 # Copyright (c) 2019 Dell Inc., or its subsidiaries. All Rights Reserved.
 #
 # Written by Claudio Fahey <claudio.fahey@dell.com>
+# Updated by Damien Mas <damien.mas@dell.com> (add new features for slurm to add jobs dependencies)
 #
 
 """
@@ -82,6 +83,8 @@ def submit_slurm_jobs(args):
     flush_caches(args)
 
     log_files = []
+    job_ids = []
+
     if True:
         for sample_rec in sample_records:
             sample_id = sample_rec[0]
@@ -97,6 +100,13 @@ def submit_slurm_jobs(args):
                 # '--mem-per-cpu', '%d' % args.mem_per_cpu,
                 '--requeue',
                 ]
+            if args.dependency_job_file is not None:
+                dependency_jobids = []
+                with open(args.dependency_job_file) as f:
+                    dependency_jobids += f.readline().split(',')
+                cmd += [
+                    '--dependency=afterany:' + ':'.join(dependency_jobids),
+                    ]
             if len(args.host) == 1:
                 cmd += ['--nodelist', ','.join(args.host)]
             cmd += [
@@ -116,8 +126,15 @@ def submit_slurm_jobs(args):
                 noop=args.noop,
             )
 
+            if not return_code:
+                job_ids += [output.split()[3]]
+
+        if args.create_dependency:
+            with open('job_ids', 'w') as f:
+                f.write(','.join(job_ids))
+
     logging.info('Jobs started. Logging to: %s' % log_dir)
-    if not args.noop: subprocess.run(['tail', '-n', '1000', '-F'] + log_files)
+    # if not args.noop: subprocess.run(['tail', '-n', '1000', '-F'] + log_files)
 
 
 def main():
@@ -145,6 +162,8 @@ def main():
     parser.add('--num_gpus', type=int, default=4)
     parser.add('--sample_id', action='append', default=[], required=False)
     parser.add('--sample_id_file', action='append', default=[], required=False)
+    parser.add('--dependency_job_file', required=False)
+    parser.add('--create_dependency', default=False, required=False)
     args, unknown_args = parser.parse_known_args()
     args.unknown_args = unknown_args
 

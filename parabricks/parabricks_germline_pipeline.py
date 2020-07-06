@@ -3,6 +3,7 @@
 # Copyright (c) 2019 Dell Inc., or its subsidiaries. All Rights Reserved.
 #
 # Written by Claudio Fahey <claudio.fahey@dell.com>
+# Updated by Damien Mas <damien.mas@dell.com> (change the way the script is parsing the fastq.gz files)
 #
 
 """
@@ -21,6 +22,7 @@ import socket
 import sys
 import time
 import uuid
+import glob
 from p3_test_driver.system_command import system_command, time_duration_to_seconds
 from p3_test_driver.json_util import append_to_json_file
 from p3_test_driver.p3_util import mkdir_for_file
@@ -135,30 +137,43 @@ def process_sample(args):
         num_gpus = len(cuda_visible_devices.split(','))
         logging.info('num_gpus=%d' % num_gpus)
         env['NVIDIA_VISIBLE_DEVICES'] = cuda_visible_devices
+        env['PetaLinkMode'] = '+static'
         rec['env'] = env
         rec['cuda_visible_devices'] = cuda_visible_devices
         rec['num_gpus'] = num_gpus
 
         fq_pairs = []
         fq_file_sizes = []
-        for i in range(args.max_num_fq_pairs):
-            pair = []
-            for j in range(1,3):
-                filename = os.path.join(input_dir, '%d_%d.fq.gz' % (i, j))
-                if os.path.isfile(filename):
-                    pair += [filename]
-                    fq_file_sizes += [os.path.getsize(filename)]
-            if pair:
-                fq_pairs += [pair]
+
+        # for i in range(args.max_num_fq_pairs):
+        #     pair = []
+        #     for j in range(1,3):
+        #         filename = os.path.join(input_dir, '%d_%d.fq.gz' % (i, j))
+        #         if os.path.isfile(filename):
+        #             pair += [filename]
+        #             fq_file_sizes += [os.path.getsize(filename)]
+        #     if pair:
+        #         fq_pairs += [pair]
+
+        filenames = glob.glob(os.path.join(input_dir, '*'))
+        for item in filenames:
+            if os.path.isfile(item):
+                fq_pairs += [item]
+                fq_file_sizes += [os.path.getsize(item)]
+
         logging.debug('fq_pairs=%s' % str(fq_pairs))
         rec['fq_pairs'] = fq_pairs
         logging.info('fq_file_sizes=%s' % str(fq_file_sizes))
         rec['fq_file_sizes'] = fq_file_sizes
 
         in_fq_cmd = []
-        for i, fq_pair in enumerate(fq_pairs):
-            header = '@RG\\tID:%d\\tLB:lib1\\tPL:bar\\tSM:%s\\tPU:%d' % (i, sample_id, i)
-            in_fq_cmd += ['--in-fq'] + fq_pair + [header]
+#        for i, fq_pair in enumerate(fq_pairs):
+#            header = '@RG\\tID:%d\\tLB:lib1\\tPL:bar\\tSM:%s\\tPU:%d' % (i, sample_id, i)
+#            in_fq_cmd += ['--in-fq'] + [fq_pair] + [header]
+
+        # header = '@RG\\tID:0\\tLB:lib1\\tPL:bar\\tSM:%s\\tPU:0' % sample_id
+        header = '@RG\\tID:foo0\\tLB:lib1\\tPL:bar\\tSM:%s\\tPU:unit0' % sample_id
+        in_fq_cmd += ['--in-fq'] + fq_pairs + [header]
 
         logging.debug('in_fq_cmd=%s' % str(in_fq_cmd))
 
@@ -180,6 +195,7 @@ def process_sample(args):
             ]
             cmd += in_fq_cmd
             rec['fq2bam_result'] = {}
+            logging.debug('cmd=%s' % str(cmd))
             run_system_command(cmd, rec['fq2bam_result'], env=env, noop=args.noop)
 
         if args.germline:
@@ -254,7 +270,6 @@ def process_sample(args):
     logging.info('END')
     if exception: raise exception
 
-
 def main():
     parser = configargparse.ArgParser(
         description='Run Parabricks germline pipeline.',
@@ -291,7 +306,6 @@ def main():
 
     logging.debug('args=%s' % str(args))
     process_sample(args)
-
 
 if __name__ == '__main__':
     main()
