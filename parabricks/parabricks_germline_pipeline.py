@@ -137,7 +137,6 @@ def process_sample(args):
         num_gpus = len(cuda_visible_devices.split(','))
         logging.info('num_gpus=%d' % num_gpus)
         env['NVIDIA_VISIBLE_DEVICES'] = cuda_visible_devices
-        env['PetaLinkMode'] = '+static'
         rec['env'] = env
         rec['cuda_visible_devices'] = cuda_visible_devices
         rec['num_gpus'] = num_gpus

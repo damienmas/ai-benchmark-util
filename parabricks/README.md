@@ -5,7 +5,7 @@
 ### Prerequisites
 
 * Access to the internet
-* nvidia-driver that supports cuda-10.0
+* nvidia cards (4 minimum per server) and nvidia-driver that supports cuda-10.0
 * singularity version 2.6.1 or higher
 * Python 3
 * curl, wget
@@ -153,6 +153,7 @@ The following reference files were used with Parabricks secondary analysis pipel
 They can be downloaded from <https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0?pli=1>
 
 Download every files under ```/home/${USER}/genomics/Ref```
+
 ```bash
 mkdir -p /home/${USER}/genomics/Ref
 ```
@@ -163,7 +164,7 @@ mkdir -p /home/${USER}/genomics/Ref
 
 The following 12 librairies were used:
 
-|Libray_name_id (Sample Name)|ENA RUN ACCESSION ID / URL|coverage|
+|Libray_name (Sample Name)|ENA RUN ACCESSION ID / URL|coverage|
 |-|-|-|
 |LP6005441-DNA_A10|<https://www.ebi.ac.uk/ena/data/view/ERR1419095>|33.59|
 |LP6005442-DNA_B12|<https://www.ebi.ac.uk/ena/data/view/ERR1419185>|33.86|
@@ -179,7 +180,75 @@ The following 12 librairies were used:
 |LP6005441-DNA_C06|<https://www.ebi.ac.uk/ena/data/view/ERR1625861>|83.23
 
 ***Remark:*** Please note that you can use the script ```./download_fastq.py``` to download the FASTQ.GZ files automatically. These files must be stored on Isilon to be accessible from every workers. **You'll need ~1.6TB of available storage.**
+By default the script will download each fastq files in the following directory ```/mnt/isilon/genomics/fastq```. Then, a folder will be created for each Librairy_Name, and the 2 .fastq.gz files will be placed inside.
 
-It might take 24 hours to download these files depending of your network connection. Please be patient !
+Example :
 
-TO BE CONTINUED
+```plaintext
+/mnt/isilon/genomics/fastq/LP6005441-DNA_A10/
+├── ERR1419095_1.fastq.gz
+└── ERR1419095_2.fastq.gz
+```
+
+It might take 24 hours to download these files depending on your network connection. Please be patient !
+
+***If you decide to download these files manually, you must at least follow the same directory structure (```<input_dir>/<LIBRAIRY_NAME>/<RUN_ACCESSION>_<1|2>.fastq.gz```), otherwise ```parabricks_germline_pipeline.py``` script will fail.***
+
+### Configure your tests
+
+#### ```submit_slurm_jobs_<xyz>.yaml```
+
+These files will help you to configure the tests you want to run. In our case we've decided to run the following set of tests:
+
+* tmp folder local
+  * Germline 4 GPUs per job (submit_slurm_jobs_germline.yaml)
+  * Deepvariant 1 GPU per job (submit_slurm_jobs_deepvariant.yaml)
+  * Deepvariant 4 GPU per job (submit_slurm_jobs_deepvariant_4gpus.yaml)
+* tmp folder on Isilon
+  * Germline 4 GPUs per job (submit_slurm_jobs_germline_all_isilon.yaml)
+  * Deepvariant 1 GPU per job (submit_slurm_jobs_deepvariant_all_isilon.yaml)
+  * Deepvariant 4 GPU per job (submit_slurm_jobs_deepvariant_all_isilon_4gpus.yaml)
+
+#### ```sample_ids_parabricks_12_low_to_high.txt```
+
+This file will define a list of librairy name that will be used for the tests.
+
+Example: ```<LIBRAIRY_NAME>,<COVERAGE>```
+
+```plaintext
+LP6005441-DNA_A10,33.59
+LP6005442-DNA_B12,33.86
+LP6005442-DNA_A04,33.95
+LP6005442-DNA_H09,34.11
+SS6004478,44.4
+SS6004472,44.45
+LP6005443-DNA_G11,44.48
+LP6005441-DNA_G04,44.56
+LP6005441-DNA_A06,68.6
+LP6005441-DNA_D05,68.83
+LP6005441-DNA_B06,80.02
+LP6005441-DNA_C06,83.23
+```
+
+### Run Simple tests
+
+```bash
+# Run germline pipeline with 4 GPUs per job
+./submit_slurm_jobs.py --config ./submit_slurm_jobs_germline.yaml --sample_id_file sample_ids_parabricks_12_low_to_high.txt
+
+# Wait for germline pipeline jobs to complete
+while squeue | grep -v JOBID > /dev/null ; do sleep 60 ; done ; sleep 300
+
+# Run Deepvariant pipeline with 4 GPUs per job
+./submit_slurm_jobs.py --config ./submit_slurm_jobs_deepvariant_4gpus.yaml --sample_id_file sample_ids_parabricks_12_low_to_high.txt
+```
+
+Once the jobs are submited you can monitor their status with these 2 commands.
+
+```bash
+# list all jobs
+squeue
+
+# list all jobs with more details
+scontrol show job
+```

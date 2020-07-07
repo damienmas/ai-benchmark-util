@@ -11,10 +11,10 @@ host:
 noop: false
 num_cpus: 48
 num_gpus: 4
-parabricks_install_tgz_file: /mnt/f600/parabricks/parabricks_install.tar.gz
-input_dir: /mnt/f600/fastq
+parabricks_install_tgz_file: /mnt/isilon/data/ai-benchark-util/parabricks/parabricks_install.tar.gz
+input_dir: /mnt/isilon/genomics/fastq
 reference_files_dir: /home/dmas/genomics/Ref
-log_dir: /mnt/f600/logs
-output_dir: /mnt/f600/output
+log_dir: /mnt/isilon/genomics/logs
+output_dir: /mnt/isilon/genomics/output
 temp_dir: /tmp/genomics
-create_dependency: true
+#create_dependency: true

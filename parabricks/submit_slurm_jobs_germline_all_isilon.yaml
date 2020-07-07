@@ -4,17 +4,17 @@ fq2bam: false
 flush_compute: true
 flush_isilon: true
 cancel_jobs: false
-isilon_host: 10.246.177.41
+isilon_host: 1.2.3.4
 host:
-  - hop-dss8440-01
-  - hop-dss8440-02
+  - worker-01
+  - worker-02
 noop: false
 num_cpus: 48
 num_gpus: 4
-parabricks_install_tgz_file: /mnt/f600/parabricks/parabricks_install.tar.gz
-input_dir: /mnt/f600/fastq
+parabricks_install_tgz_file: /mnt/isilon/data/ai-benchark-util/parabricks/parabricks_install.tar.gz
+input_dir: /mnt/isilon/genomics/fastq
 reference_files_dir: /home/dmas/genomics/Ref
-log_dir: /mnt/f600/logs
-output_dir: /mnt/f600/output
-temp_dir: /mnt/f600/tmp
-create_dependency: true
+log_dir: /mnt/isilon/genomics/logs
+output_dir: /mnt/isilon/genomics/output
+temp_dir: /mnt/isilon/genomics/tmp
+#create_dependency: true
