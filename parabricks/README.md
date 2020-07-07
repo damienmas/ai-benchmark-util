@@ -121,7 +121,7 @@ tar -zcvf parabricks_install.tar.gz parabricks
 cp parabricks_install.tar.gz /mnt/isilon/data/ai-benchark-util/parabricks/
 ```
 
-### Verfy Installation
+### Verify Installation
 
 ```bash
 # Download sample data to your local drive
