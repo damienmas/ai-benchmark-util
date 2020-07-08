@@ -5,12 +5,12 @@
     - cloudalchemy.node-exporter
 
 - name: NVIDIA GPU Exporter
-  hosts: ["dgx2"]
+  hosts: ["workers"]
   tags: ["nvidia"]
   tasks:
     - shell: |
         docker rm --force nvidia_gpu_prometheus_exporter ; \
-        nvidia-docker run -d \
+        docker run --gpus all -d \
         -p 9445:9445 \
         --restart always \
         --name nvidia_gpu_prometheus_exporter \

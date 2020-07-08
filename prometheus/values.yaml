@@ -1,12 +1,16 @@
 extraScrapeConfigs: |
-  - job_name: dgx
+  - job_name: workers
     scrape_interval: 10s
     static_configs:
       - targets:
-          - 10.246.21.247:9100
-          - 10.246.21.247:9445
+          - 10.1.2.3:9100
+          - 10.1.2.3:9445
+          - 10.1.2.4:9100
+          - 10.1.2.4:9445
+          - 10.1.2.5:9100
+          - 10.1.2.5:9445
         labels:
-          group: dgx
+          group: workers
 
 #  - job_name: mgmt
 #    scrape_interval: 10s

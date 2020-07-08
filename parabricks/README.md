@@ -21,7 +21,7 @@ cd /mnt/isilon
 mkdir data
 cd data
 git clone https://github.com/damienmas/ai-benchmark-util.git
-git checkout 1313b09
+git checkout <LATEST_COMMIT_ID>
 ```
 
 ## On every worker nodes
@@ -253,3 +253,121 @@ squeue
 # list all jobs with more details
 scontrol show job
 ```
+
+### Monitor your environment
+
+If you want, you can monitor your environment and collect certain metrics (like GPUs/CPUs utilization). This method is using several components :
+
+* ansible
+* docker
+* kubernetes (minikube)
+* helm
+* grafana
+* prometheus
+* cloudalchemy.node-exporter
+* NVIDIA GPU Exporter
+
+#### Deploy a kubernetes cluster
+
+On a separate VM, deploy a kubernetes environment. For easy deployment we're using minikube.
+
+Here is an example on how to deploy docker/minikube/helm on Ubuntu Server 18.04.
+
+```bash
+# Install packages to allow apt to use a repository over HTTPS:
+sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    lsb-core \
+    software-properties-common
+
+# Add Docker’s official GPG key:
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+# Verify the fingerprint
+sudo apt-key fingerprint 0EBFCD88
+
+# Add the docker stable repository
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+
+# Verify available versions
+apt-cache madison docker-ce
+
+# Install docker, For GPU use 19.03
+DOCKER_VERSION="5:19.03.6~3-0~ubuntu-bionic"; sudo apt install docker-ce=${DOCKER_VERSION} docker-ce-cli=${DOCKER_VERSION} containerd.io
+
+# Show version
+sudo docker version
+
+# Run a simple docker container
+sudo docker run hello-world
+
+# Install Minikube 1.7.2
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_1.7.2-0_amd64.deb \
+  && sudo dpkg -i minikube_1.7.2-0_amd64.deb
+
+# Install older version
+curl -LO https://github.com/kubernetes/minikube/releases/download/v1.6.2/minikube_1.6.2.deb \
+  && sudo dpkg -i minikube_1.6.2.deb
+
+# Install kubectl
+curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.6/bin/linux/amd64/kubectl &&  chmod +x kubectl && sudo cp kubectl /usr/local/bin/ && rm kubectl
+
+# Start minikube
+sudo minikube start --vm-driver=none --extra-config=kubelet.max-pods=1000 --extra-config=kubelet.resolv-conf=/run/systemd/resolve/resolv.conf --kubernetes-version=v1.15.6
+
+# Install socat (requirement for helm)
+sudo apt install socat
+
+# Download helm and install
+wget --no-verbose -O /tmp/helm-linux-amd64.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz && tar -xzvf /tmp/helm-linux-amd64.tar.gz -C /tmp linux-amd64/helm && sudo mv /tmp/linux-amd64/helm /usr/local/bin && rm -rf /tmp/helm-linux-amd64.tar.gz /tmp/linux-amd64
+
+# initialize helm
+sudo helm init
+
+# Verify that helm client and server is running
+sudo helm version
+```
+
+### Start Monitoring
+
+```bash
+cd ai-benchmark-util/ansible
+git clone https://github.com/cloudalchemy/ansible-node-exporter.git
+./run_monitoring_playbook.sh
+```
+
+### Start polling the data into prometheus (run this command on the server where you have installed kubernetes/minikube)
+
+```bash
+# Install prometheus on your kubernetes cluster. mount your isilon export on this new host to be able to access your modified github repository.
+cd ai-benchmark-util/prometheus
+
+# edit values.yaml file
+# every targets on port 9100 correspond to node-export KPIs
+# every targets on port 9445 correspond to NVIDIA GPU Exporter KPIs
+./install.sh
+```
+
+### Install Grafana
+
+```bash
+helm upgrade --install grafana stable/grafana
+kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+kubectl port-forward service/grafana 9093:80 --address 0.0.0.0 &
+kubectl patch svc -n default prometheus-server prometheus-server --patch '{"spec":{"type":"NodePort"}}'
+```
+
+### Configure Grafana
+
+loggin into grafana: ```http://<SERVER_IP>:9093/```
+
+Import the following dashboards:
+
+* ```ai-benchmark-util/grafana/node-exporter-full_rev19.json```
+* ```ai-benchmark-util/grafana/nvidia-gpu_rev1.json```
