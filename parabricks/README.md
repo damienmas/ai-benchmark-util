@@ -307,6 +307,15 @@ sudo docker version
 # Run a simple docker container
 sudo docker run hello-world
 
+# Add the package repositories for nvidia-container-toolkit
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+# Install nvidia-container-toolkit
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
+
 # Install Minikube 1.7.2
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_1.7.2-0_amd64.deb \
   && sudo dpkg -i minikube_1.7.2-0_amd64.deb
