@@ -21,7 +21,7 @@ cd /mnt/isilon
 mkdir data
 cd data
 git clone https://github.com/damienmas/ai-benchmark-util.git
-git checkout <LATEST_COMMIT_ID>
+git checkout parabricks_v1
 ```
 
 ## On every worker nodes
